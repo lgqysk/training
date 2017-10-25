@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<title>小球碰撞</title>
+<meta name="description" content="">
+<meta name="keywords" content="">
+<style>
+	.ball{
+		position:absolute;
+		width:100px;
+		height:100px;
+		border-radius:50%;
+	}
+	.ball-green{
+		border:1px solid #3f3;
+		background:#6f3;
+	}
+</style>
+</head>
+<body>
+    <script>
+		var color = ["ball-green","ball-red","ball-blue","ball-yellow","ball-purple","ball-orange"];
+		var body = document.getElementsByTagName("body")[0];
+		function Ball(num){
+			for(var i=0;i<num;i++){
+				var ball = this.createBall(color[0]);
+				this.throwBallToBox(ball);
+			}
+		}
+		Ball.prototype.speed = 4;
+		Ball.prototype.ballSet = [];
+		Ball.prototype.createBall = function(color){
+			var ball = document.createElement("div");
+			ball.className = "ball " + color;
+			return ball;
+		}
+
+		Ball.prototype.throwBallToBox = function(ball){
+			var oThis = this;
+			body.appendChild(ball);
+			oThis.ballSet.push(ball); //将小球放入集合
+			
+			
+			ball.speedX = oThis.speed;
+			ball.speedY = oThis.speed;
+
+			ball.width = parseInt(this.getStyle(ball,"width"));
+			ball.height = parseInt(this.getStyle(ball,"height"));
+			var entrance = 5 +  Math.random()*(window.innerWidth - ball.width - 5);
+			ball.index = oThis.ballSet.length;
+			ball.innerText = oThis.ballSet.length;
+			ball.style.top = "5px";
+			ball.style.left = entrance + "px";
+			ball.timer = window.setInterval(function(){
+				oThis.knockWithBox(ball);
+				oThis.changePosition(ball);
+				for(var i=0;i<oThis.ballSet.length;i++){
+					if(ball.index != oThis.ballSet[i].index){
+						if(oThis.knockWithBall(ball,oThis.ballSet[i])){
+							oThis.changePosition(ball);
+						}
+					}
+				}
+			},30);
+			
+		}
+
+		Ball.prototype.knockWithBox = function(ball){
+			if(ball.offsetLeft <= 0){
+				ball.speedX <0? ball.speedX = -ball.speedX:null;
+			}
+			if(ball.offsetLeft >= (window.innerWidth - ball.width)){
+				ball.speedX >0? ball.speedX = -ball.speedX:null;
+			}
+			if(ball.offsetTop <= 0){
+				ball.speedY <0? ball.speedY = -ball.speedY:null;
+			}
+			if(ball.offsetTop >= (window.innerHeight - ball.height)){
+				ball.speedY >0? ball.speedY = -ball.speedY:null;
+			}
+		}
+
+		Ball.prototype.knockWithBall = function(ball1,ball2){
+			var O1 = {},O2 = {},ko1o2,k1,k2,distance,ao,a1,a2,a1o,a2o,speed1,speed2;
+			O1.x = ball1.offsetLeft + ball1.width/2;
+			O1.y = ball1.offsetTop + ball1.height/2;
+			O2.x = ball2.offsetLeft + ball2.width/2;
+			O2.y = ball2.offsetTop + ball2.height/2; 
+			distance = Math.sqrt(Math.pow((O1.x - O2.x),2) + Math.pow((O1.y - O2.y),2)); //球心距
+			if(distance < (ball1.width + ball2.width)/2){
+				ko1o2 = (O1.y - O2.y)/(O1.x - O2.x); //圆心连线的斜率
+				ao = Math.atan(ko1o2);
+				
+				if(ball1.speedX == 0){
+					a1 = Math.PI/2;
+					a1o = Math.PI/2 - ao;
+				}else{
+					k1 = ball1.speedY/ball1.speedX;
+					a1 = Math.atan(k1);
+					a1o = Math.atan((k1 - ko1o2)/(1 + k1*ko1o2));
+				}
+				if(ball2.speedX == 0){
+					a2 = Math.PI/2;
+					a2o = Math.PI/2 - ao;
+				}else{
+					k2 = ball2.speedY/ball2.speedX;
+					a2 = Math.atan(k2);
+					a2o = Math.atan((k2 - ko1o2)/(1 + k2*ko1o2));
+				}
+				speed1 = Math.sqrt(Math.pow(ball1.speedX,2) + Math.pow(ball1.speedY,2));
+				speed2 = Math.sqrt(Math.pow(ball2.speedX,2) + Math.pow(ball2.speedY,2));
+				/*
+				ball1.speedX = -ball1.speedX/Math.abs(ball1.speedX)*speed1*Math.sin(ao - a1);
+				ball1.speedY = ball1.speedY/Math.abs(ball1.speedY)*speed1*Math.cos(ao - a1);
+
+				ball2.speedX = -ball2.speedX/Math.abs(ball2.speedX)*speed2*Math.sin(ao - a2);
+				ball2.speedY = ball2.speedY/Math.abs(ball2.speedY)*speed2*Math.cos(ao - a2);*//*
+				ball1.speedX = speed1*(Math.cos(Math.PI-a1)*Math.cos(ao) + Math.sin(Math.PI-a1)*Math.cos(ao));
+				ball1.speedY = speed1*(Math.sin(Math.PI-a1)*Math.sin(ao) + Math.cos(Math.PI-a1)*Math.sin(ao));
+				
+				ball2.speedX = speed1*(Math.cos(Math.PI-a2)*Math.cos(ao) + Math.sin(Math.PI-a2)*Math.cos(ao));
+				ball2.speedY = speed1*(Math.sin(Math.PI-a2)*Math.sin(ao) + Math.cos(Math.PI-a2)*Math.sin(ao));
+				*/
+				
+				//console.log(ball1.speedX + "   "+ball1.speedY);
+				//console.log(ball2.speedX + "   "+ball2.speedY);
+				clearInterval(ball1.timer);
+				clearInterval(ball2.timer);
+				return true;
+			}
+			return false;
+		}
+		Ball.prototype.changePosition  = function(ball){
+			ball.style.left = ball.offsetLeft + ball.speedX + "px";
+			ball.style.top = ball.offsetTop + ball.speedY + "px";
+		}
+		
+		Ball.prototype.getStyle = function(obj,attr){ 
+			return obj.currentStyle?obj.currentStyle[attr]:getComputedStyle(obj)[attr];
+		}
+		new Ball(3);
+		
+			
+		
+	</script>
+
+</body>
+</html>
